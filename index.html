@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parametrização Fiscal - Metre Sistemas</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- React e ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel para interpretar JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+    const PRODUCTS = [
+      {
+        id: 'cafe-capsula',
+        nome: 'Café Espresso (Cápsula 3 Corações)',
+        categoria: 'Bar e Cafeteria',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '2101.12.00',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável (Tributação normal)',
+        status: 'Ativo',
+        notas: 'Extrato/preparado à base de café extraído no local.'
+      },
+      {
+        id: 'cafe-leite',
+        nome: 'Café com Leite (Pingado)',
+        categoria: 'Bar e Cafeteria',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '2101.12.00',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Bebida preparada no balcão da lanchonete.'
+      },
+      {
+        id: 'cachaca-limao',
+        nome: 'Dose de Cachaça com Limão',
+        categoria: 'Bar e Cafeteria',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '2208.40.00',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Dose fracionada servida para consumo imediato.'
+      },
+      {
+        id: 'suco-natural',
+        nome: 'Suco Natural (Genérico)',
+        categoria: 'Bar e Cafeteria',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '2009.90.00',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Botão genérico para sucos espremidos/misturas de frutas.'
+      },
+      {
+        id: 'suco-polpa',
+        nome: 'Suco de Polpa (Refresqueira)',
+        categoria: 'Bar e Cafeteria',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '2009.89.90',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Suco reconstituído na refresqueira.'
+      },
+      {
+        id: 'pudim-bolo',
+        nome: 'Pudim e Bolos no Pote (Casa)',
+        categoria: 'Sobremesas',
+        grupo: 'Produção Própria',
+        tipo: '04 - Produto Acabado',
+        ncm: '1905.90.90',
+        cClassTrib: '200047 - Serviço de alimentação em restaurantes e estabelecimentos similares',
+        icmsCst: '000 - Tributado Integralmente',
+        icmsAliq: '8,40%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: '5.101',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Produção culinária interna servida aos clientes.'
+      },
+      {
+        id: 'gelo-consumo',
+        nome: 'Gelo p/ Atendimento (Drinks/Mesas)',
+        categoria: 'Insumos e Consumo',
+        grupo: 'Insumo / Consumo',
+        tipo: '07 - Material de Uso e Consumo',
+        ncm: '2201.90.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'ISENTO',
+        icmsAliq: '0,00%',
+        cest: 'Não preencher (Em branco)',
+        mva: '0.00',
+        cfop: 'Não se aplica (Não vendido)',
+        pisCofins: 'PIS E: 70 / S: 04 (ou E: 98 / S: 49)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Não Vendido (Vermelho)',
+        notas: 'Representa 90% do volume. Custo absorvido nas refeições e bebidas.'
+      },
+      {
+        id: 'gelo-revenda',
+        nome: 'Gelo Saco Revenda (10% Avulso)',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '2201.90.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '03.001.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 70 (0.00) / S: 04 (0.00) - Cofins E: 70 (0.00) / S: 04 (0.00)',
+        naturezaReceita: 'Bebidas e gelo - Alíquota Zero / Monofásico',
+        status: 'Ativo',
+        notas: 'Venda de saco de gelo comprado fechado para levar.'
+      },
+      {
+        id: 'snacks-farinha',
+        nome: 'Salgadinhos (Torcida, Doritos, Pingo D’Ouro)',
+        categoria: 'Salgadinhos e Snacks',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '1905.90.90',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.031.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável (Tributação normal)',
+        status: 'Ativo',
+        notas: 'Abrange Pingo de Ouro, Doritos Dinamita, Torcida e extrusados de milho/trigo.'
+      },
+      {
+        id: 'batatas-chips',
+        nome: 'Batatas Chips (Sensações, Lay’s, Ruffles)',
+        categoria: 'Salgadinhos e Snacks',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '2005.20.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.031.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Batatas preparadas/fritas em fatias prontas para consumo.'
+      },
+      {
+        id: 'amendoins',
+        nome: 'Amendoim Japonês / Sem Pele',
+        categoria: 'Salgadinhos e Snacks',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '2008.11.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.031.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Amendoins preparados torrados ou com casca crocante.'
+      },
+      {
+        id: 'chicletes',
+        nome: 'Chicletes Diversos (Goma de Mascar)',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '1704.10.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.016.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Botão genérico para Trident, Mentos goma, Bubbaloo, etc.'
+      },
+      {
+        id: 'balas-drops',
+        nome: 'Balas e Drops Diversos (Halls, Mentos)',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '1704.90.20',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.017.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Botão genérico para confeitos, drops, pastilhas duras e balas.'
+      },
+      {
+        id: 'nissin',
+        nome: 'Nissin Lamen e Cup Noodles',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '1902.30.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.049.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Massas alimentícias instantâneas revendidas na embalagem fechada.'
+      },
+      {
+        id: 'wafers',
+        nome: 'Ouro Branco, Kinder Tronky e Nutella B-ready',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '1905.32.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '17.031.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Wafers recheados/cobertos. No Lucro Presumido tributam normalmente PIS/COFINS.'
+      },
+      {
+        id: 'picoles',
+        nome: 'Picolés e Sorvetes',
+        categoria: 'Bomboniere e Loja',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '2105.00.10',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '23.001.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Picolés individuais de freezer (Kibon, Nestlé, Salada, etc.).'
+      },
+      {
+        id: 'isqueiro',
+        nome: 'Isqueiros (BIC, Cricket)',
+        categoria: 'Tabacaria e Caixa',
+        grupo: 'Revenda com ST',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '9613.10.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '21.111.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 50 (0.65) / S: 02 (0.65) - Cofins E: 50 (3.00) / S: 02 (3.00)',
+        naturezaReceita: 'Não aplicável',
+        status: 'Ativo',
+        notas: 'Isqueiros de bolso a gás não recarregáveis.'
+      },
+      {
+        id: 'cigarro',
+        nome: 'Cigarros (Carteira / Box)',
+        categoria: 'Tabacaria e Caixa',
+        grupo: 'Tabacaria (ST PIS/COFINS)',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '2402.20.00',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '04.001.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 75 (0.00) / S: 05 (0.00) - Cofins E: 75 (0.00) / S: 05 (0.00)',
+        naturezaReceita: 'Cigarros, de fumo (tabaco) ou de seus sucedâneos',
+        status: 'Ativo',
+        notas: 'CST 05 libera a Natureza da Receita correta no Metre Sistemas.'
+      },
+      {
+        id: 'remedios',
+        nome: 'Remédios de Balcão (Dorflex, Eno, Neosa)',
+        categoria: 'Medicamentos MIPs',
+        grupo: 'Medicamentos Monofásicos',
+        tipo: '00 - Mercadoria para Revenda',
+        ncm: '3004.90.99',
+        cClassTrib: '000001 - Situações tributadas integralmente pelo IBS e CBS',
+        icmsCst: 'Substituição Tributária (ST) - 060',
+        icmsAliq: '0,00%',
+        cest: '13.004.00',
+        mva: '0.00',
+        cfop: '5.405',
+        pisCofins: 'PIS E: 70 (0.00) / S: 04 (0.00) - Cofins E: 70 (0.00) / S: 04 (0.00)',
+        naturezaReceita: 'Medicamentos - Alíquota Zero / Monofásico',
+        status: 'Ativo',
+        notas: 'Monofásico federal (Lei 10.147/2000). Alíquota zero de PIS/COFINS na saída.'
+      }
+    ];
+
+    function App() {
+      const [isDark, setIsDark] = useState(() => {
+        return localStorage.getItem('theme') === 'dark' || 
+          (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      });
+      const [searchTerm, setSearchTerm] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('Todas');
+      const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
+      const [copied, setCopied] = useState(false);
+
+      useEffect(() => {
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+        }
+      }, [isDark]);
+
+      const categories = useMemo(() => {
+        const cats = new Set(PRODUCTS.map(p => p.categoria));
+        return ['Todas', ...Array.from(cats)];
+      }, []);
+
+      const filteredProducts = useMemo(() => {
+        return PRODUCTS.filter(p => {
+          const matchesCat = selectedCategory === 'Todas' || p.categoria === selectedCategory;
+          const searchLower = searchTerm.toLowerCase();
+          const matchesSearch = 
+            p.nome.toLowerCase().includes(searchLower) ||
+            p.ncm.includes(searchLower) ||
+            p.cest.includes(searchLower) ||
+            p.grupo.toLowerCase().includes(searchLower);
+          return matchesCat && matchesSearch;
+        });
+      }, [searchTerm, selectedCategory]);
+
+      const copyToClipboard = () => {
+        if (!selectedProduct) return;
+        const text = `PRODUTO: ${selectedProduct.nome}
+TIPO: ${selectedProduct.tipo}
+NCM: ${selectedProduct.ncm}
+IBS/CBS: ${selectedProduct.cClassTrib}
+ICMS: ${selectedProduct.icmsCst} (${selectedProduct.icmsAliq})
+CEST: ${selectedProduct.cest}
+CFOP: ${selectedProduct.cfop}
+PIS/COFINS: ${selectedProduct.pisCofins}
+NATUREZA RECEITA: ${selectedProduct.naturezaReceita}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Header */}
+          <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-20 px-4 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                  M
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg leading-tight text-slate-900 dark:text-white">
+                    Metre Sistemas - Parametrização Fiscal
+                  </h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Churrascaria Bonanza • Contagem/MG • Lucro Presumido
+                  </p>
+                </div>
+              </div>
+
+              {/* Botão Modo Noturno */}
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                title={isDark ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+              >
+                {isDark ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+              </button>
+            </div>
+          </header>
+
+          {/* Main Layout */}
+          <div className="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-4">
+            {/* Lista Lateral de Produtos */}
+            <div className="lg:col-span-5 flex flex-col gap-3">
+              {/* Filtro de Busca */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Pesquisar por nome, NCM ou CEST..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-3 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                />
+              </div>
+
+              {/* Filtro de Categorias */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition-colors ${
+                      selectedCategory === cat
+                        ? 'bg-orange-600 text-white shadow-sm'
+                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Lista */}
+              <div className="flex-1 flex flex-col gap-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                {filteredProducts.map((p) => {
+                  const isSelected = selectedProduct?.id === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setSelectedProduct(p)}
+                      className={`p-3.5 rounded-xl border transition cursor-pointer text-left ${
+                        isSelected
+                          ? 'border-orange-500 bg-orange-50/70 dark:bg-orange-950/30 shadow-sm'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="font-semibold text-sm leading-tight text-slate-900 dark:text-slate-100">
+                          {p.nome}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                          {p.grupo}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                        <span>NCM: <strong className="text-slate-700 dark:text-slate-300 font-mono">{p.ncm}</strong></span>
+                        <span>•</span>
+                        <span>CFOP: <strong className="text-slate-700 dark:text-slate-300 font-mono">{p.cfop}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Painel de Detalhes (Espelho do ERP Metre) */}
+            <div className="lg:col-span-7">
+              {selectedProduct ? (
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col sticky top-20">
+                  {/* Cabeçalho do Card */}
+                  <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                        {selectedProduct.categoria}
+                      </span>
+                      <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                        {selectedProduct.nome}
+                      </h2>
+                    </div>
+
+                    <button
+                      onClick={copyToClipboard}
+                      className="px-3.5 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-medium text-xs flex items-center gap-2 shadow-sm transition"
+                    >
+                      {copied ? '✓ Copiado!' : 'Copiar Parâmetros'}
+                    </button>
+                  </div>
+
+                  {/* Campos do Sistema Metre */}
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Tipo de Produto *</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.tipo}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">NCM *</span>
+                      <span className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100">{selectedProduct.ncm}</span>
+                    </div>
+
+                    <div className="sm:col-span-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Classificação Tributária IBS/CBS (cClassTrib) *</span>
+                      <span className="font-semibold text-orange-700 dark:text-orange-400">{selectedProduct.cClassTrib}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Tributos ICMS *</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.icmsCst}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Alíquota ICMS (MG)</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.icmsAliq}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">CEST *</span>
+                      <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.cest}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">MVA Ajustado</span>
+                      <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.mva}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">CFOP *</span>
+                      <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">{selectedProduct.cfop}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Status do Item</span>
+                      <span className={`font-semibold ${selectedProduct.status.includes('Não') ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                        {selectedProduct.status}
+                      </span>
+                    </div>
+
+                    <div className="sm:col-span-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">PIS / COFINS *</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono text-[11px]">{selectedProduct.pisCofins}</span>
+                    </div>
+
+                    <div className="sm:col-span-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                      <span className="block text-slate-400 font-medium mb-1">Natureza da Receita</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedProduct.naturezaReceita}</span>
+                    </div>
+
+                    {selectedProduct.notas && (
+                      <div className="sm:col-span-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                        <span className="block text-amber-800 dark:text-amber-400 font-bold mb-0.5">Nota de Operação:</span>
+                        <span className="text-amber-900 dark:text-amber-300">{selectedProduct.notas}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
